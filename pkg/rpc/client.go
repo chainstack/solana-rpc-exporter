@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/naviat/solana-exporter-rpc/pkg/slog"
+	"github.com/naviat/solana-rpc-exporter/pkg/slog"
 	"go.uber.org/zap"
 )
 

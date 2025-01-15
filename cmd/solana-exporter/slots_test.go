@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/naviat/solana-exporter-rpc/pkg/rpc"
+	"github.com/naviat/solana-rpc-exporter/pkg/rpc"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/testutil"
 	"github.com/stretchr/testify/assert"

@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/naviat/solana-exporter-rpc/pkg/rpc"
-	"github.com/naviat/solana-exporter-rpc/pkg/slog"
+	"github.com/naviat/solana-rpc-exporter/pkg/rpc"
+	"github.com/naviat/solana-rpc-exporter/pkg/slog"
 )
 
 // assertf is a utility function for runtime assertions

@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/naviat/solana-exporter-rpc/pkg/rpc"
-	"github.com/naviat/solana-exporter-rpc/pkg/slog"
+	"github.com/naviat/solana-rpc-exporter/pkg/rpc"
+	"github.com/naviat/solana-rpc-exporter/pkg/slog"
 	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 )

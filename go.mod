@@ -1,4 +1,4 @@
-module github.com/naviat/solana-exporter-rpc
+module github.com/naviat/solana-rpc-exporter
 
 go 1.22.0
 

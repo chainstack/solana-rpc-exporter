@@ -1,7 +1,7 @@
 package rpc
 
 import (
-	"github.com/naviat/solana-exporter-rpc/pkg/slog"
+	"github.com/naviat/solana-rpc-exporter/pkg/slog"
 	"os"
 	"testing"
 )

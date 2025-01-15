@@ -4,7 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"github.com/naviat/solana-exporter-rpc/pkg/rpc"
+	"github.com/naviat/solana-rpc-exporter/pkg/rpc"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

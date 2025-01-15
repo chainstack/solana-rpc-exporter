@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"time"
-	"github.com/naviat/solana-exporter-rpc/pkg/slog"
+	"github.com/naviat/solana-rpc-exporter/pkg/slog"
 )
 
 type ExporterConfig struct {
