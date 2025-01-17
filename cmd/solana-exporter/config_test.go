@@ -81,7 +81,7 @@ func TestNewExporterConfig(t *testing.T) {
 
 func parseFlagsForTest(args []string) (*ExporterConfig, error) {
 	flagSet := flag.NewFlagSet("test", flag.ContinueOnError)
-	
+
 	var (
 		httpTimeout   int
 		rpcUrl        string

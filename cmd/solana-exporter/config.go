@@ -3,8 +3,8 @@ package main
 import (
 	"context"
 	"flag"
-	"time"
 	"github.com/naviat/solana-rpc-exporter/pkg/slog"
+	"time"
 )
 
 type ExporterConfig struct {
@@ -55,7 +55,7 @@ func NewExporterConfigFromCLI(ctx context.Context) (*ExporterConfig, error) {
 		clusterName   string
 		debug         bool
 	)
-	
+
 	flag.IntVar(
 		&httpTimeout,
 		"http-timeout",
