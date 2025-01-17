@@ -8,8 +8,8 @@ import (
 
 func TestMockServer_getBalance(t *testing.T) {
 	_, client := NewMockClient(
-		t, 
-		nil, 
+		t,
+		nil,
 		map[string]int{"aaa": 2 * LamportsInSol},
 		nil,
 		map[int]MockSlotInfo{},
@@ -40,9 +40,9 @@ func TestMockServer_getBlock(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t,
 		Block{
-			BlockTime: 1234567890,
+			BlockTime:       1234567890,
 			NumTransactions: 1,
-			Fee: 10,
+			Fee:             10,
 		},
 		*block,
 	)
@@ -51,9 +51,9 @@ func TestMockServer_getBlock(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t,
 		Block{
-			BlockTime: 1234567891,
+			BlockTime:       1234567891,
 			NumTransactions: 2,
-			Fee: 5,
+			Fee:             5,
 		},
 		*block,
 	)
@@ -98,7 +98,7 @@ func TestMockServer_getSlotInfo(t *testing.T) {
 	assert.Equal(t,
 		SlotInfo{
 			Parent: 1,
-			Slot: 2,
+			Slot:   2,
 			Status: "confirmed",
 		},
 		*slotInfo,

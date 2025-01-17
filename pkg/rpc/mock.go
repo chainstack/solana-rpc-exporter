@@ -59,10 +59,10 @@ func NewMockServer(
 
 	ms := &MockServer{
 		listener:         listener,
-		easyResults:     easyResults,
-		balances:        balances,
+		easyResults:      easyResults,
+		balances:         balances,
 		inflationRewards: inflationRewards,
-		slotInfos:       slotInfos,
+		slotInfos:        slotInfos,
 	}
 
 	mux := http.NewServeMux()
@@ -156,11 +156,11 @@ func (s *MockServer) getResult(method string, params ...any) (any, *RPCError) {
 		if slotInfo.Block == nil {
 			return nil, &RPCError{Code: SlotSkippedCode, Message: "Slot skipped."}
 		}
-		
+
 		return map[string]any{
-			"blockTime": slotInfo.Block.BlockTime,
+			"blockTime":       slotInfo.Block.BlockTime,
 			"numTransactions": slotInfo.Block.NumTransactions,
-			"fee": slotInfo.Block.Fee,
+			"fee":             slotInfo.Block.Fee,
 		}, nil
 	}
 
@@ -170,10 +170,10 @@ func (s *MockServer) getResult(method string, params ...any) (any, *RPCError) {
 		if !ok {
 			return nil, &RPCError{Code: BlockCleanedUpCode, Message: "Slot cleaned up."}
 		}
-		
+
 		return map[string]any{
 			"parent": slotInfo.Parent,
-			"slot": slot,
+			"slot":   slot,
 			"status": slotInfo.Status,
 		}, nil
 	}
@@ -245,10 +245,10 @@ func NewMockClient(
 			},
 			Timeout: time.Second,
 		},
-		RpcUrl:         server.URL(),
-		HttpTimeout:    time.Second,
-		cacheValidity:  60 * time.Second,
-		logger:         nil, // don't set logger for tests
+		RpcUrl:        server.URL(),
+		HttpTimeout:   time.Second,
+		cacheValidity: 60 * time.Second,
+		logger:        nil, // don't set logger for tests
 	}
 	return server, client
 }

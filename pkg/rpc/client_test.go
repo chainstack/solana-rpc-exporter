@@ -28,9 +28,9 @@ func TestClient_GetBlock(t *testing.T) {
 	_, client := newMethodTester(t,
 		"getBlock",
 		map[string]any{
-			"blockTime": 1234567890,
+			"blockTime":       1234567890,
 			"numTransactions": 1,
-			"fee": 10,
+			"fee":             10,
 			"rewards": []map[string]any{
 				{"pubkey": "aaa", "lamports": 10, "rewardType": "fee"},
 			},
@@ -47,9 +47,9 @@ func TestClient_GetBlock(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t,
 		&Block{
-			BlockTime: 1234567890,
+			BlockTime:       1234567890,
 			NumTransactions: 1,
-			Fee: 10,
+			Fee:             10,
 			Rewards: []BlockReward{
 				{Pubkey: "aaa", Lamports: 10, RewardType: "fee"},
 			},
@@ -122,7 +122,7 @@ func TestClient_GetInflationReward(t *testing.T) {
 		[]map[string]int{
 			{
 				"amount": 2_500,
-				"epoch": 2,
+				"epoch":  2,
 			},
 		},
 	)
@@ -177,7 +177,7 @@ func TestClient_GetVersion(t *testing.T) {
 
 func TestClient_GetPerfCounters(t *testing.T) {
 	expectedCounters := map[string]int64{
-		"blocksProcessed": 100,
+		"blocksProcessed":       100,
 		"transactionsProcessed": 1000,
 	}
 	_, client := newMethodTester(t, "getPerfCounters", expectedCounters)
@@ -194,7 +194,7 @@ func TestClient_GetSlotInfo(t *testing.T) {
 		"getSlotInfo",
 		map[string]any{
 			"parent": int64(99),
-			"slot": int64(100),
+			"slot":   int64(100),
 			"status": "finalized",
 		},
 	)
@@ -206,7 +206,7 @@ func TestClient_GetSlotInfo(t *testing.T) {
 	assert.Equal(t,
 		&SlotInfo{
 			Parent: 99,
-			Slot: 100,
+			Slot:   100,
 			Status: "finalized",
 		},
 		slotInfo,
@@ -214,16 +214,16 @@ func TestClient_GetSlotInfo(t *testing.T) {
 }
 
 func TestClient_TestConnection(t *testing.T) {
-    // Test successful connection
-    _, client := newMethodTester(t, "getVersion", map[string]any{"solana-core": "1.16.7"})
-    err := client.TestConnection(context.Background())
-    assert.NoError(t, err)
+	// Test successful connection
+	_, client := newMethodTester(t, "getVersion", map[string]any{"solana-core": "1.16.7"})
+	err := client.TestConnection(context.Background())
+	assert.NoError(t, err)
 
-    // Test failed connection - need to return RPCError for failure case
-    _, client = newMethodTester(t, "getVersion", nil)
-    server := client.RpcUrl // Save the URL before replacing it
-    client.RpcUrl = "http://invalid-url:1234" // Use invalid URL to force error
-    err = client.TestConnection(context.Background())
-    assert.Error(t, err)
-    client.RpcUrl = server // Restore the URL
+	// Test failed connection - need to return RPCError for failure case
+	_, client = newMethodTester(t, "getVersion", nil)
+	server := client.RpcUrl                   // Save the URL before replacing it
+	client.RpcUrl = "http://invalid-url:1234" // Use invalid URL to force error
+	err = client.TestConnection(context.Background())
+	assert.Error(t, err)
+	client.RpcUrl = server // Restore the URL
 }

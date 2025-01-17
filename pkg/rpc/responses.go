@@ -25,9 +25,9 @@ type (
 	}
 
 	PerformanceStats struct {
-		NumSlots          int64   `json:"numSlots"`
-		NumTransactions   int64   `json:"numTransactions"`
-		SamplePeriodSecs  int64   `json:"samplePeriodSecs"`
+		NumSlots         int64   `json:"numSlots"`
+		NumTransactions  int64   `json:"numTransactions"`
+		SamplePeriodSecs int64   `json:"samplePeriodSecs"`
 		Slot             int64   `json:"slot"`
 		TPS              float64 `json:"tps"`
 		TPSMax           float64 `json:"tpsMax"`
@@ -35,9 +35,9 @@ type (
 	}
 
 	SlotInfo struct {
-		Parent  int64  `json:"parent"`
-		Slot    int64  `json:"slot"`
-		Status  string `json:"status"` // "confirmed", "processed", "finalized"
+		Parent int64  `json:"parent"`
+		Slot   int64  `json:"slot"`
+		Status string `json:"status"` // "confirmed", "processed", "finalized"
 	}
 
 	HealthStatus struct {
@@ -52,11 +52,11 @@ type (
 	}
 
 	Block struct {
-		BlockTime       int64         `json:"blockTime"`
-		NumTransactions int           `json:"numTransactions"`
-		Fee            int           `json:"fee"`
-		Rewards        []BlockReward `json:"rewards,omitempty"`
-		Transactions   []TransactionInfo `json:"transactions,omitempty"`
+		BlockTime       int64             `json:"blockTime"`
+		NumTransactions int               `json:"numTransactions"`
+		Fee             int               `json:"fee"`
+		Rewards         []BlockReward     `json:"rewards,omitempty"`
+		Transactions    []TransactionInfo `json:"transactions,omitempty"`
 	}
 
 	BlockReward struct {

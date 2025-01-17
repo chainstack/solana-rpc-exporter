@@ -16,17 +16,17 @@ import (
 )
 
 type cachedValue[T any] struct {
-    value     T
-    timestamp time.Time
+	value     T
+	timestamp time.Time
 }
 
 const (
 	// LamportsInSol is the number of lamports in 1 SOL
 	LamportsInSol = 1_000_000_000
 
-	CommitmentFinalized  Commitment = "finalized"
-	CommitmentConfirmed  Commitment = "confirmed"
-	CommitmentProcessed  Commitment = "processed"
+	CommitmentFinalized Commitment = "finalized"
+	CommitmentConfirmed Commitment = "confirmed"
+	CommitmentProcessed Commitment = "processed"
 )
 
 type (
@@ -37,10 +37,10 @@ type (
 		logger      *zap.SugaredLogger
 
 		// Cache fields
-		cacheMutex     sync.RWMutex
-		versionCache   *cachedValue[string]
-		healthCache    *cachedValue[string]
-		cacheValidity  time.Duration
+		cacheMutex    sync.RWMutex
+		versionCache  *cachedValue[string]
+		healthCache   *cachedValue[string]
+		cacheValidity time.Duration
 	}
 
 	Request struct {
@@ -67,12 +67,12 @@ func NewRPCClient(rpcAddr string, httpTimeout time.Duration) *Client {
 	return &Client{
 		HttpClient: http.Client{
 			Transport: transport,
-			Timeout: httpTimeout,
-		}, 
-		RpcUrl:      rpcAddr,
-		HttpTimeout: httpTimeout,
-		logger:      slog.Get(),
-		cacheValidity:  60 * time.Second, // Cache version and health for 1 minute
+			Timeout:   httpTimeout,
+		},
+		RpcUrl:        rpcAddr,
+		HttpTimeout:   httpTimeout,
+		logger:        slog.Get(),
+		cacheValidity: 60 * time.Second, // Cache version and health for 1 minute
 	}
 }
 
@@ -86,12 +86,12 @@ func (c *Client) TestConnection(ctx context.Context) error {
 		if err == nil {
 			return nil
 		}
-		
+
 		lastErr = err
-		if c.logger != nil {  // Add this check
-            c.logger.Warnf("Connection attempt %d/%d failed: %v", i+1, maxRetries, err)
-        }
-		
+		if c.logger != nil { // Add this check
+			c.logger.Warnf("Connection attempt %d/%d failed: %v", i+1, maxRetries, err)
+		}
+
 		if i < maxRetries-1 { // Don't sleep after the last attempt
 			time.Sleep(retryDelay)
 			retryDelay *= 2 // Exponential backoff
@@ -102,75 +102,75 @@ func (c *Client) TestConnection(ctx context.Context) error {
 }
 
 func getResponse[T any](
-    ctx context.Context,
-    client *Client,
-    method string,
-    params []any,
-    rpcResponse *Response[T],
+	ctx context.Context,
+	client *Client,
+	method string,
+	params []any,
+	rpcResponse *Response[T],
 ) error {
-    request := &Request{
-        Jsonrpc: "2.0",
-        Id:      1,
-        Method:  method,
-        Params:  params,
-    }
-    
-    buffer, err := json.Marshal(request)
-    if err != nil {
-        return fmt.Errorf("failed to marshal request: %w", err)
-    }
-    
-    // Optional logging
-    if client.logger != nil {
-        client.logger.Debugf("Making RPC request to %s: %s", client.RpcUrl, string(buffer))
-    }
-    
-    req, err := http.NewRequestWithContext(ctx, "POST", client.RpcUrl, bytes.NewBuffer(buffer))
-    if err != nil {
-        return fmt.Errorf("failed to create request: %w", err)
-    }
-    
-    req.Header.Set("Content-Type", "application/json")
-    
-    start := time.Now()
-    resp, err := client.HttpClient.Do(req)
-    if err != nil {
-        if client.logger != nil {
-            client.logger.Errorf("RPC request failed: %v", err)
-        }
-        return fmt.Errorf("%s RPC call failed: %w", method, err)
-    }
-    defer resp.Body.Close()
-    
-    // Optional logging
-    if client.logger != nil {
-        duration := time.Since(start)
-        client.logger.Debugw("RPC request completed",
-            "method", method,
-            "duration_ms", duration.Milliseconds(),
-        )
-    }
-    
-    body, err := io.ReadAll(resp.Body)
-    if err != nil {
-        return fmt.Errorf("error reading response: %w", err)
-    }
-    
-    // Optional logging
-    if client.logger != nil {
-        client.logger.Debugf("RPC response: %s", string(body))
-    }
-    
-    if err = json.Unmarshal(body, rpcResponse); err != nil {
-        return fmt.Errorf("failed to decode response: %w", err)
-    }
-    
-    if rpcResponse.Error.Code != 0 {
-        rpcResponse.Error.Method = method
-        return &rpcResponse.Error
-    }
-    
-    return nil
+	request := &Request{
+		Jsonrpc: "2.0",
+		Id:      1,
+		Method:  method,
+		Params:  params,
+	}
+
+	buffer, err := json.Marshal(request)
+	if err != nil {
+		return fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	// Optional logging
+	if client.logger != nil {
+		client.logger.Debugf("Making RPC request to %s: %s", client.RpcUrl, string(buffer))
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "POST", client.RpcUrl, bytes.NewBuffer(buffer))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	start := time.Now()
+	resp, err := client.HttpClient.Do(req)
+	if err != nil {
+		if client.logger != nil {
+			client.logger.Errorf("RPC request failed: %v", err)
+		}
+		return fmt.Errorf("%s RPC call failed: %w", method, err)
+	}
+	defer resp.Body.Close()
+
+	// Optional logging
+	if client.logger != nil {
+		duration := time.Since(start)
+		client.logger.Debugw("RPC request completed",
+			"method", method,
+			"duration_ms", duration.Milliseconds(),
+		)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return fmt.Errorf("error reading response: %w", err)
+	}
+
+	// Optional logging
+	if client.logger != nil {
+		client.logger.Debugf("RPC response: %s", string(body))
+	}
+
+	if err = json.Unmarshal(body, rpcResponse); err != nil {
+		return fmt.Errorf("failed to decode response: %w", err)
+	}
+
+	if rpcResponse.Error.Code != 0 {
+		rpcResponse.Error.Method = method
+		return &rpcResponse.Error
+	}
+
+	return nil
 }
 
 // Core RPC methods
@@ -184,66 +184,66 @@ func (c *Client) GetEpochInfo(ctx context.Context, commitment Commitment) (*Epoc
 }
 
 func (c *Client) GetVersion(ctx context.Context) (string, error) {
-    // Check cache first
-    c.cacheMutex.RLock()
-    if c.versionCache != nil && time.Since(c.versionCache.timestamp) < c.cacheValidity {
-        version := c.versionCache.value
-        c.cacheMutex.RUnlock()
-        if c.logger != nil {  // Add this check
-            c.logger.Debug("Version returned from cache")
-        }
-        return version, nil
-    }
-    c.cacheMutex.RUnlock()
+	// Check cache first
+	c.cacheMutex.RLock()
+	if c.versionCache != nil && time.Since(c.versionCache.timestamp) < c.cacheValidity {
+		version := c.versionCache.value
+		c.cacheMutex.RUnlock()
+		if c.logger != nil { // Add this check
+			c.logger.Debug("Version returned from cache")
+		}
+		return version, nil
+	}
+	c.cacheMutex.RUnlock()
 
-    // Cache miss or expired, fetch new value
-    var resp Response[struct {
-        Version string `json:"solana-core"`
-    }]
-    if err := getResponse(ctx, c, "getVersion", []any{}, &resp); err != nil {
-        return "", err
-    }
+	// Cache miss or expired, fetch new value
+	var resp Response[struct {
+		Version string `json:"solana-core"`
+	}]
+	if err := getResponse(ctx, c, "getVersion", []any{}, &resp); err != nil {
+		return "", err
+	}
 
-    // Update cache
-    c.cacheMutex.Lock()
-    c.versionCache = &cachedValue[string]{
-        value:     resp.Result.Version,
-        timestamp: time.Now(),
-    }
-    c.cacheMutex.Unlock()
+	// Update cache
+	c.cacheMutex.Lock()
+	c.versionCache = &cachedValue[string]{
+		value:     resp.Result.Version,
+		timestamp: time.Now(),
+	}
+	c.cacheMutex.Unlock()
 
-    return resp.Result.Version, nil
+	return resp.Result.Version, nil
 }
 
 func (c *Client) GetHealth(ctx context.Context) (string, error) {
-    // Check cache first
-    c.cacheMutex.RLock()
-    if c.healthCache != nil && time.Since(c.healthCache.timestamp) < c.cacheValidity {
-        health := c.healthCache.value
-        c.cacheMutex.RUnlock()
-        if c.logger != nil {  // Add this check
-            c.logger.Debug("Health status returned from cache")
-        }
-        return health, nil
-    }
-    c.cacheMutex.RUnlock()
+	// Check cache first
+	c.cacheMutex.RLock()
+	if c.healthCache != nil && time.Since(c.healthCache.timestamp) < c.cacheValidity {
+		health := c.healthCache.value
+		c.cacheMutex.RUnlock()
+		if c.logger != nil { // Add this check
+			c.logger.Debug("Health status returned from cache")
+		}
+		return health, nil
+	}
+	c.cacheMutex.RUnlock()
 
-    // Cache miss or expired, fetch new value
-    var resp Response[string]
-    if err := getResponse(ctx, c, "getHealth", []any{}, &resp); err != nil {
-        // Don't cache error responses
-        return "", err
-    }
+	// Cache miss or expired, fetch new value
+	var resp Response[string]
+	if err := getResponse(ctx, c, "getHealth", []any{}, &resp); err != nil {
+		// Don't cache error responses
+		return "", err
+	}
 
-    // Update cache
-    c.cacheMutex.Lock()
-    c.healthCache = &cachedValue[string]{
-        value:     resp.Result,
-        timestamp: time.Now(),
-    }
-    c.cacheMutex.Unlock()
+	// Update cache
+	c.cacheMutex.Lock()
+	c.healthCache = &cachedValue[string]{
+		value:     resp.Result,
+		timestamp: time.Now(),
+	}
+	c.cacheMutex.Unlock()
 
-    return resp.Result, nil
+	return resp.Result, nil
 }
 
 func (c *Client) GetMinimumLedgerSlot(ctx context.Context) (int64, error) {
@@ -290,10 +290,10 @@ func (c *Client) GetBalance(ctx context.Context, commitment Commitment, address 
 func (c *Client) GetBlock(ctx context.Context, commitment Commitment, slot int, encoding string) (*Block, error) {
 	var resp Response[Block]
 	config := map[string]any{
-		"commitment": string(commitment),
-		"encoding": encoding,
+		"commitment":         string(commitment),
+		"encoding":           encoding,
 		"transactionDetails": encoding,
-		"rewards": true,
+		"rewards":            true,
 	}
 	if err := getResponse(ctx, c, "getBlock", []any{slot, config}, &resp); err != nil {
 		return nil, err
@@ -306,12 +306,12 @@ func (c *Client) GetInflationReward(ctx context.Context, commitment Commitment, 
 	for i, addr := range addresses {
 		addressesAny[i] = addr
 	}
-	
+
 	config := map[string]any{
 		"commitment": string(commitment),
-		"epoch": epoch,
+		"epoch":      epoch,
 	}
-	
+
 	var resp Response[[]InflationReward]
 	if err := getResponse(ctx, c, "getInflationReward", []any{addressesAny, config}, &resp); err != nil {
 		return nil, err
