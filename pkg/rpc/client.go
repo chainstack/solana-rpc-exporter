@@ -88,7 +88,9 @@ func (c *Client) TestConnection(ctx context.Context) error {
 		}
 		
 		lastErr = err
-		c.logger.Warnf("Connection attempt %d/%d failed: %v", i+1, maxRetries, err)
+		if c.logger != nil {  // Add this check
+            c.logger.Warnf("Connection attempt %d/%d failed: %v", i+1, maxRetries, err)
+        }
 		
 		if i < maxRetries-1 { // Don't sleep after the last attempt
 			time.Sleep(retryDelay)
@@ -100,73 +102,75 @@ func (c *Client) TestConnection(ctx context.Context) error {
 }
 
 func getResponse[T any](
-	ctx context.Context,
-	client *Client,
-	method string,
-	params []any,
-	rpcResponse *Response[T],
+    ctx context.Context,
+    client *Client,
+    method string,
+    params []any,
+    rpcResponse *Response[T],
 ) error {
-	logger := client.logger
-	
-	// Format request
-	request := &Request{
-		Jsonrpc: "2.0",
-		Id:      1,
-		Method:  method,
-		Params:  params,
-	}
-	
-	buffer, err := json.Marshal(request)
-	if err != nil {
-		return fmt.Errorf("failed to marshal request: %w", err)
-	}
-	
-	logger.Debugf("Making RPC request to %s: %s", client.RpcUrl, string(buffer))
-	
-	// Create request with timeout
-	req, err := http.NewRequestWithContext(ctx, "POST", client.RpcUrl, bytes.NewBuffer(buffer))
-	if err != nil {
-		return fmt.Errorf("failed to create request: %w", err)
-	}
-	
-	req.Header.Set("Content-Type", "application/json")
-	
-	// Execute request
-	start := time.Now()
-	resp, err := client.HttpClient.Do(req)
-	if err != nil {
-		logger.Errorf("RPC request failed: %v", err)
-		return fmt.Errorf("%s RPC call failed: %w", method, err)
-	}
-	defer resp.Body.Close()
-	
-	// Log latency
-	duration := time.Since(start)
-	logger.Debugw("RPC request completed",
-		"method", method,
-		"duration_ms", duration.Milliseconds(),
-	)
-	
-	// Read response
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return fmt.Errorf("error reading response: %w", err)
-	}
-	
-	logger.Debugf("RPC response: %s", string(body))
-	
-	// Unmarshal response
-	if err = json.Unmarshal(body, rpcResponse); err != nil {
-		return fmt.Errorf("failed to decode response: %w", err)
-	}
-	
-	// Check for RPC error
-	if rpcResponse.Error.Code != 0 {
-		rpcResponse.Error.Method = method
-		return &rpcResponse.Error
-	}
-	
-	return nil
+    request := &Request{
+        Jsonrpc: "2.0",
+        Id:      1,
+        Method:  method,
+        Params:  params,
+    }
+    
+    buffer, err := json.Marshal(request)
+    if err != nil {
+        return fmt.Errorf("failed to marshal request: %w", err)
+    }
+    
+    // Optional logging
+    if client.logger != nil {
+        client.logger.Debugf("Making RPC request to %s: %s", client.RpcUrl, string(buffer))
+    }
+    
+    req, err := http.NewRequestWithContext(ctx, "POST", client.RpcUrl, bytes.NewBuffer(buffer))
+    if err != nil {
+        return fmt.Errorf("failed to create request: %w", err)
+    }
+    
+    req.Header.Set("Content-Type", "application/json")
+    
+    start := time.Now()
+    resp, err := client.HttpClient.Do(req)
+    if err != nil {
+        if client.logger != nil {
+            client.logger.Errorf("RPC request failed: %v", err)
+        }
+        return fmt.Errorf("%s RPC call failed: %w", method, err)
+    }
+    defer resp.Body.Close()
+    
+    // Optional logging
+    if client.logger != nil {
+        duration := time.Since(start)
+        client.logger.Debugw("RPC request completed",
+            "method", method,
+            "duration_ms", duration.Milliseconds(),
+        )
+    }
+    
+    body, err := io.ReadAll(resp.Body)
+    if err != nil {
+        return fmt.Errorf("error reading response: %w", err)
+    }
+    
+    // Optional logging
+    if client.logger != nil {
+        client.logger.Debugf("RPC response: %s", string(body))
+    }
+    
+    if err = json.Unmarshal(body, rpcResponse); err != nil {
+        return fmt.Errorf("failed to decode response: %w", err)
+    }
+    
+    if rpcResponse.Error.Code != 0 {
+        rpcResponse.Error.Method = method
+        return &rpcResponse.Error
+    }
+    
+    return nil
 }
 
 // Core RPC methods
@@ -185,7 +189,9 @@ func (c *Client) GetVersion(ctx context.Context) (string, error) {
     if c.versionCache != nil && time.Since(c.versionCache.timestamp) < c.cacheValidity {
         version := c.versionCache.value
         c.cacheMutex.RUnlock()
-        c.logger.Debug("Version returned from cache")
+        if c.logger != nil {  // Add this check
+            c.logger.Debug("Version returned from cache")
+        }
         return version, nil
     }
     c.cacheMutex.RUnlock()
@@ -215,7 +221,9 @@ func (c *Client) GetHealth(ctx context.Context) (string, error) {
     if c.healthCache != nil && time.Since(c.healthCache.timestamp) < c.cacheValidity {
         health := c.healthCache.value
         c.cacheMutex.RUnlock()
-        c.logger.Debug("Health status returned from cache")
+        if c.logger != nil {  // Add this check
+            c.logger.Debug("Health status returned from cache")
+        }
         return health, nil
     }
     c.cacheMutex.RUnlock()
@@ -268,4 +276,54 @@ func (c *Client) GetPerfCounters(ctx context.Context) (map[string]int64, error) 
 		return nil, err
 	}
 	return resp.Result, nil
+}
+
+func (c *Client) GetBalance(ctx context.Context, commitment Commitment, address string) (float64, error) {
+	var resp Response[ContextualResult[int]]
+	config := map[string]string{"commitment": string(commitment)}
+	if err := getResponse(ctx, c, "getBalance", []any{address, config}, &resp); err != nil {
+		return 0, err
+	}
+	return float64(resp.Result.Value) / LamportsInSol, nil
+}
+
+func (c *Client) GetBlock(ctx context.Context, commitment Commitment, slot int, encoding string) (*Block, error) {
+	var resp Response[Block]
+	config := map[string]any{
+		"commitment": string(commitment),
+		"encoding": encoding,
+		"transactionDetails": encoding,
+		"rewards": true,
+	}
+	if err := getResponse(ctx, c, "getBlock", []any{slot, config}, &resp); err != nil {
+		return nil, err
+	}
+	return &resp.Result, nil
+}
+
+func (c *Client) GetInflationReward(ctx context.Context, commitment Commitment, addresses []string, epoch int) ([]InflationReward, error) {
+	addressesAny := make([]any, len(addresses))
+	for i, addr := range addresses {
+		addressesAny[i] = addr
+	}
+	
+	config := map[string]any{
+		"commitment": string(commitment),
+		"epoch": epoch,
+	}
+	
+	var resp Response[[]InflationReward]
+	if err := getResponse(ctx, c, "getInflationReward", []any{addressesAny, config}, &resp); err != nil {
+		return nil, err
+	}
+	return resp.Result, nil
+}
+
+func (c *Client) GetSlotInfo(ctx context.Context, commitment Commitment, slot int) (*SlotInfo, error) {
+	config := map[string]string{"commitment": string(commitment)}
+	var resp Response[SlotInfo]
+	if err := getResponse(ctx, c, "getSlotInfo", []any{slot, config}, &resp); err != nil {
+		return nil, err
+	}
+	return &resp.Result, nil
 }
