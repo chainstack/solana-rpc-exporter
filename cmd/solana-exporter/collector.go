@@ -47,10 +47,10 @@ type SolanaCollector struct {
 
 	/// descriptors:
 	NodeVersion             *GaugeDesc
-	NodeHealth             *GaugeDesc
-	NodeTransactionCount   *GaugeDesc
-	NodeNumSlotsBehind     *GaugeDesc
-	NodeMinimumLedgerSlot  *GaugeDesc
+	NodeHealth              *GaugeDesc
+	NodeTransactionCount    *GaugeDesc
+	NodeNumSlotsBehind      *GaugeDesc
+	NodeMinimumLedgerSlot   *GaugeDesc
 	NodeFirstAvailableBlock *GaugeDesc
 }
 
@@ -205,10 +205,10 @@ func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
 	callStart = time.Now()
 	epochInfo, err := c.rpcClient.GetEpochInfo(ctx, rpc.CommitmentConfirmed)
 	c.logger.Debugf("GetEpochInfo took: %v ms", time.Since(callStart).Milliseconds())
-	
+
 	if err == nil {
 		ch <- c.NodeTransactionCount.MustNewConstMetric(float64(epochInfo.TransactionCount), c.config.ClusterName)
-		
+
 		c.logger.Infow("Successfully collected metrics",
 			"epoch", epochInfo.Epoch,
 			"slots_behind", numSlotsBehind,
