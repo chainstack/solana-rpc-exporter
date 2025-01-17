@@ -47,13 +47,10 @@ type SolanaCollector struct {
 
 	/// descriptors:
 	NodeVersion             *GaugeDesc
-	NodeHealth              *GaugeDesc
-	NodeSlotHeight          *GaugeDesc
-	NodeBlockHeight         *GaugeDesc
-	NodeTransactionCount    *GaugeDesc
-	NodeNumSlotsBehind      *GaugeDesc
-	NodeBlockProcessingTime *GaugeDesc
-	NodeMinimumLedgerSlot   *GaugeDesc
+	NodeHealth             *GaugeDesc
+	NodeTransactionCount   *GaugeDesc
+	NodeNumSlotsBehind     *GaugeDesc
+	NodeMinimumLedgerSlot  *GaugeDesc
 	NodeFirstAvailableBlock *GaugeDesc
 }
 
@@ -74,16 +71,6 @@ func NewSolanaCollector(client *rpc.Client, config *ExporterConfig) *SolanaColle
 			"Health status of the RPC node",
 			ClusterLabel,
 		),
-		NodeSlotHeight: NewGaugeDesc(
-			"solana_node_slot_height",
-			"Current slot height of the RPC node",
-			ClusterLabel,
-		),
-		NodeBlockHeight: NewGaugeDesc(
-			"solana_node_block_height",
-			"Current block height of the RPC node",
-			ClusterLabel,
-		),
 		NodeTransactionCount: NewGaugeDesc(
 			"solana_node_transaction_count",
 			"Total number of transactions processed by the RPC node",
@@ -92,11 +79,6 @@ func NewSolanaCollector(client *rpc.Client, config *ExporterConfig) *SolanaColle
 		NodeNumSlotsBehind: NewGaugeDesc(
 			"solana_node_num_slots_behind",
 			"Number of slots the RPC node is behind",
-			ClusterLabel,
-		),
-		NodeBlockProcessingTime: NewGaugeDesc(
-			"solana_node_block_processing_time_seconds",
-			"Time taken to process the latest block in seconds",
 			ClusterLabel,
 		),
 		NodeMinimumLedgerSlot: NewGaugeDesc(
@@ -116,11 +98,8 @@ func NewSolanaCollector(client *rpc.Client, config *ExporterConfig) *SolanaColle
 func (c *SolanaCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.NodeVersion.Desc
 	ch <- c.NodeHealth.Desc
-	ch <- c.NodeSlotHeight.Desc
-	ch <- c.NodeBlockHeight.Desc
 	ch <- c.NodeTransactionCount.Desc
 	ch <- c.NodeNumSlotsBehind.Desc
-	ch <- c.NodeBlockProcessingTime.Desc
 	ch <- c.NodeMinimumLedgerSlot.Desc
 	ch <- c.NodeFirstAvailableBlock.Desc
 }
@@ -222,35 +201,24 @@ func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
 		ch <- c.NodeFirstAvailableBlock.MustNewConstMetric(0, c.config.ClusterName)
 	}
 
-	// Collect epoch info and measure block processing time
-	blockStart := time.Now()
+	// Collect transaction count from epoch info
+	callStart = time.Now()
 	epochInfo, err := c.rpcClient.GetEpochInfo(ctx, rpc.CommitmentConfirmed)
-	blockProcessingTime := time.Since(blockStart).Seconds()
-	c.logger.Debugf("GetEpochInfo took: %v ms", time.Since(blockStart).Milliseconds())
-
+	c.logger.Debugf("GetEpochInfo took: %v ms", time.Since(callStart).Milliseconds())
+	
 	if err == nil {
-		ch <- c.NodeSlotHeight.MustNewConstMetric(float64(epochInfo.AbsoluteSlot), c.config.ClusterName)
-		ch <- c.NodeBlockHeight.MustNewConstMetric(float64(epochInfo.BlockHeight), c.config.ClusterName)
 		ch <- c.NodeTransactionCount.MustNewConstMetric(float64(epochInfo.TransactionCount), c.config.ClusterName)
-		ch <- c.NodeBlockProcessingTime.MustNewConstMetric(blockProcessingTime, c.config.ClusterName)
-
+		
 		c.logger.Infow("Successfully collected metrics",
-			"slot_height", epochInfo.AbsoluteSlot,
-			"block_height", epochInfo.BlockHeight,
 			"epoch", epochInfo.Epoch,
 			"slots_behind", numSlotsBehind,
 			"min_ledger_slot", slot,
 			"first_available_block", block,
 			"version", version,
-			"block_processing_time", blockProcessingTime,
 			"total_duration_ms", time.Since(totalStart).Milliseconds(),
 		)
 	} else {
 		c.logger.Errorw("Failed to collect metrics", "error", err)
-		ch <- c.NodeSlotHeight.MustNewConstMetric(0, c.config.ClusterName)
-		ch <- c.NodeBlockHeight.MustNewConstMetric(0, c.config.ClusterName)
 		ch <- c.NodeTransactionCount.MustNewConstMetric(0, c.config.ClusterName)
-		ch <- c.NodeBlockProcessingTime.MustNewConstMetric(0, c.config.ClusterName)
 	}
-
 }
