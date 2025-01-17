@@ -24,31 +24,20 @@ type (
 		TransactionCount int64 `json:"transactionCount"`
 	}
 
-	ClusterNodes struct {
-		Pubkey       string `json:"pubkey"`
-		Gossip      string `json:"gossip"`
-		TPU         string `json:"tpu"`
-		RPC         string `json:"rpc"`
-		Version     string `json:"version"`
-		FeatureSet  uint32 `json:"featureSet"`
-		ShredVer    uint16 `json:"shredVersion"`
-	}
-
 	PerformanceStats struct {
-		NumSlots              int64   `json:"numSlots"`
-		NumTransactions       int64   `json:"numTransactions"`
-		SamplePeriodSecs     int64   `json:"samplePeriodSecs"`
-		Slot                 int64   `json:"slot"`
-		TPS                  float64 `json:"tps"`
-		TPSMax               float64 `json:"tpsMax"`
-		TPSMin               float64 `json:"tpsMin"`
+		NumSlots         int64   `json:"numSlots"`
+		NumTransactions  int64   `json:"numTransactions"`
+		SamplePeriodSecs int64   `json:"samplePeriodSecs"`
+		Slot             int64   `json:"slot"`
+		TPS              float64 `json:"tps"`
+		TPSMax           float64 `json:"tpsMax"`
+		TPSMin           float64 `json:"tpsMin"`
 	}
 
 	SlotInfo struct {
-		Parent         int64  `json:"parent"`
-		Root          int64  `json:"root"`
-		Slot          int64  `json:"slot"`
-		Status        string `json:"status"` // "confirmed", "processed", "finalized"
+		Parent int64  `json:"parent"`
+		Slot   int64  `json:"slot"`
+		Status string `json:"status"` // "confirmed", "processed", "finalized"
 	}
 
 	HealthStatus struct {
@@ -58,70 +47,35 @@ type (
 	}
 
 	RPCVersionInfo struct {
-		SolanaCore  string `json:"solana-core"`
-		FeatureSet  uint32 `json:"feature-set"`
+		SolanaCore string `json:"solana-core"`
+		FeatureSet uint32 `json:"feature-set"`
 	}
 
-	BlockInfo struct {
-		BlockTime         int64                    `json:"blockTime"`
-		BlockHeight      int64                    `json:"blockHeight"`
-		NumTransactions  int64                    `json:"numTransactions"`
-		Slot             int64                    `json:"slot"`
-		ParentSlot       int64                    `json:"parentSlot"`
-		Blockhash        string                   `json:"blockhash"`
-		PreviousBlockhash string                  `json:"previousBlockhash"`
-		Rewards          []BlockReward            `json:"rewards,omitempty"`
-		Transactions     []TransactionInfo        `json:"transactions,omitempty"`
+	Block struct {
+		BlockTime       int64             `json:"blockTime"`
+		NumTransactions int               `json:"numTransactions"`
+		Fee             int               `json:"fee"`
+		Rewards         []BlockReward     `json:"rewards,omitempty"`
+		Transactions    []TransactionInfo `json:"transactions,omitempty"`
 	}
 
 	BlockReward struct {
-		Pubkey       string `json:"pubkey"`
-		Lamports    int64  `json:"lamports"`
-		PostBalance int64  `json:"postBalance"`
-		RewardType   string `json:"rewardType"`
-		Commission   *int   `json:"commission,omitempty"`
+		Pubkey     string `json:"pubkey"`
+		Lamports   int64  `json:"lamports"`
+		RewardType string `json:"rewardType"`
 	}
 
 	TransactionInfo struct {
-		Signature string           `json:"signature"`
-		Slot      int64           `json:"slot"`
-		BlockTime *int64          `json:"blockTime,omitempty"`
-		Err       interface{}     `json:"err,omitempty"`
-		Meta      *TransactionMeta `json:"meta,omitempty"`
+		Transaction map[string]any `json:"transaction"`
 	}
 
-	TransactionMeta struct {
-		Fee               int64    `json:"fee"`
-		PreBalances      []int64  `json:"preBalances"`
-		PostBalances     []int64  `json:"postBalances"`
-		LogMessages      []string `json:"logMessages,omitempty"`
-		Status           interface{} `json:"status"`
-		ComputeUnitsConsumed *int64 `json:"computeUnitsConsumed,omitempty"`
-	}
-
-	SupplyInfo struct {
-		Total                   int64    `json:"total"`
-		Circulating            int64    `json:"circulating"`
-		NonCirculating         int64    `json:"nonCirculating"`
-		NonCirculatingAccounts []string `json:"nonCirculatingAccounts"`
-	}
-
-	TokenAmount struct {
-		Amount   string   `json:"amount"`
-		Decimals int      `json:"decimals"`
-		UiAmount *float64 `json:"uiAmount"`
+	InflationReward struct {
+		Amount int `json:"amount"`
+		Epoch  int `json:"epoch"`
 	}
 )
 
 // Helper methods for HealthStatus
 func (h *HealthStatus) IsHealthy() bool {
 	return h.Status == "ok"
-}
-
-// Helper methods for TokenAmount
-func (t *TokenAmount) GetUiAmount() float64 {
-	if t.UiAmount != nil {
-		return *t.UiAmount
-	}
-	return 0
 }

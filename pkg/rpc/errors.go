@@ -7,13 +7,13 @@ import (
 
 const (
 	// RPC Error Codes
-	NodeUnhealthyCode              = -32005
-	SlotSkippedCode               = -32007
-	BlockNotAvailableCode         = -32004
-	BlockCleanedUpCode            = -32001
-	NodeBehindCode                = -32009
-	TimeoutCode                   = -32000
-	InternalErrorCode             = -32603
+	NodeUnhealthyCode     = -32005
+	SlotSkippedCode       = -32007
+	BlockNotAvailableCode = -32004
+	BlockCleanedUpCode    = -32001
+	NodeBehindCode        = -32009
+	TimeoutCode           = -32000
+	InternalErrorCode     = -32603
 )
 
 type (
@@ -27,9 +27,9 @@ type (
 
 	RPCError struct {
 		Message string         `json:"message"`
-		Code    int64         `json:"code"`
+		Code    int64          `json:"code"`
 		Data    map[string]any `json:"data"`
-		Method  string        // Added for context
+		Method  string         // Added for context
 	}
 )
 
@@ -42,11 +42,11 @@ func UnpackRpcErrorData[T any](rpcErr *RPCError, formatted T) error {
 	if err != nil {
 		return fmt.Errorf("failed to marshal %s RPC error data: %w", rpcErr.Method, err)
 	}
-	
+
 	if err = json.Unmarshal(bytesData, formatted); err != nil {
 		return fmt.Errorf("failed to unmarshal %s RPC error data: %w", rpcErr.Method, err)
 	}
-	
+
 	return nil
 }
 

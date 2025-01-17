@@ -17,7 +17,7 @@ import (
 func main() {
 	slog.Init()
 	logger := slog.Get()
-	
+
 	// Set up context with cancellation
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
