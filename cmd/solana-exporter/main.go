@@ -37,9 +37,9 @@ func main() {
 		logger.Fatal(err)
 	}
 
-	// Validate cluster name
-	if !isValidCluster(config.ClusterName) {
-		logger.Fatalf("Invalid cluster name: %s. Must be one of: mainnet, testnet, devnet, localnet", config.ClusterName)
+	// Validate network name
+	if !isValidNetwork(config.NetworkName) {
+		logger.Fatalf("Invalid network name: %s. Must be one of: mainnet, testnet, devnet, localnet", config.NetworkName)
 	}
 
 	// Initialize RPC client

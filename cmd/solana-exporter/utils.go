@@ -25,11 +25,11 @@ func toString(i any) string {
 	return fmt.Sprintf("%v", i)
 }
 
-// isValidCluster checks if the provided cluster name is valid
-func isValidCluster(cluster string) bool {
-	validClusters := []string{"mainnet", "testnet", "devnet", "localnet"}
-	for _, valid := range validClusters {
-		if cluster == valid {
+// isValidNetwork checks if the provided network name is valid
+func isValidNetwork(network string) bool {
+	validNetworks := []string{"mainnet", "testnet", "devnet", "localnet"}
+	for _, valid := range validNetworks {
+		if network == valid {
 			return true
 		}
 	}

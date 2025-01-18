@@ -134,7 +134,7 @@ func (s *RPCSimulator) Run(ctx context.Context) {
 func TestSolanaCollector_WithSimulator(t *testing.T) {
 	simulator, client := NewRPCSimulator(t, 100) // Start at slot 100
 	config := &ExporterConfig{
-		ClusterName: "test-cluster",
+		NetworkName: "test-network",
 	}
 	collector := NewSolanaCollector(client, config)
 

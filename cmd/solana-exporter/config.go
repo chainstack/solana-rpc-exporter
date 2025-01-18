@@ -12,7 +12,7 @@ type ExporterConfig struct {
 	RpcUrl        string
 	ListenAddress string
 	SlotPace      time.Duration
-	ClusterName   string
+	NetworkName   string
 	Debug         bool
 }
 
@@ -22,7 +22,7 @@ func NewExporterConfig(
 	rpcUrl string,
 	listenAddress string,
 	slotPace time.Duration,
-	clusterName string,
+	networkName string,
 	debug bool,
 ) (*ExporterConfig, error) {
 	logger := slog.Get()
@@ -31,7 +31,7 @@ func NewExporterConfig(
 		"httpTimeout", httpTimeout.Seconds(),
 		"rpcUrl", rpcUrl,
 		"listenAddress", listenAddress,
-		"clusterName", clusterName,
+		"networkName", networkName,
 		"debug", debug,
 	)
 
@@ -40,7 +40,7 @@ func NewExporterConfig(
 		RpcUrl:        rpcUrl,
 		ListenAddress: listenAddress,
 		SlotPace:      slotPace,
-		ClusterName:   clusterName,
+		NetworkName:   networkName,
 		Debug:         debug,
 	}
 	return &config, nil
@@ -52,7 +52,7 @@ func NewExporterConfigFromCLI(ctx context.Context) (*ExporterConfig, error) {
 		rpcUrl        string
 		listenAddress string
 		slotPace      int
-		clusterName   string
+		networkName   string
 		debug         bool
 	)
 
@@ -82,10 +82,10 @@ func NewExporterConfigFromCLI(ctx context.Context) (*ExporterConfig, error) {
 		"Time between slot-watching metric collections, defaults to 1s.",
 	)
 	flag.StringVar(
-		&clusterName,
-		"cluster-name",
+		&networkName,
+		"network",
 		"mainnet",
-		"Name of the Solana cluster (mainnet, testnet, devnet)",
+		"Name of the Solana network (mainnet, testnet, devnet)",
 	)
 	flag.BoolVar(
 		&debug,
@@ -101,7 +101,7 @@ func NewExporterConfigFromCLI(ctx context.Context) (*ExporterConfig, error) {
 		rpcUrl,
 		listenAddress,
 		time.Duration(slotPace)*time.Second,
-		clusterName,
+		networkName,
 		debug,
 	)
 	if err != nil {

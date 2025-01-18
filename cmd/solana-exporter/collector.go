@@ -16,7 +16,7 @@ const (
 	// Labels
 	StatusLabel  = "status"
 	VersionLabel = "version"
-	ClusterLabel = "cluster"
+	NetworkLabel = "network"
 )
 
 const (
@@ -65,37 +65,37 @@ func NewSolanaCollector(client *rpc.Client, config *ExporterConfig) *SolanaColle
 		NodeVersion: NewGaugeDesc(
 			"solana_node_version_info",
 			"Version information of the RPC node",
-			ClusterLabel, VersionLabel,
+			NetworkLabel, VersionLabel,
 		),
 		NodeHealth: NewGaugeDesc(
 			"solana_node_health",
 			"Health status of the RPC node",
-			ClusterLabel,
+			NetworkLabel,
 		),
 		NodeTransactionCount: NewGaugeDesc(
 			"solana_node_transaction_count",
 			"Total number of transactions processed by the RPC node",
-			ClusterLabel,
+			NetworkLabel,
 		),
 		NodeNumSlotsBehind: NewGaugeDesc(
 			"solana_node_num_slots_behind",
 			"Number of slots the RPC node is behind",
-			ClusterLabel,
+			NetworkLabel,
 		),
 		NodeMinimumLedgerSlot: NewGaugeDesc(
 			"solana_node_minimum_ledger_slot",
 			"Lowest slot that the RPC node has information about in its ledger",
-			ClusterLabel,
+			NetworkLabel,
 		),
 		NodeFirstAvailableBlock: NewGaugeDesc(
 			"solana_node_first_available_block",
 			"First available block in the RPC node's ledger",
-			ClusterLabel,
+			NetworkLabel,
 		),
 		NodeEpoch: NewGaugeDesc(
 			"solana_network_epoch",
 			"Current epoch number",
-			ClusterLabel,
+			NetworkLabel,
 		),
 	}
 	return collector
@@ -124,7 +124,7 @@ func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
 	c.cacheMutex.RLock()
 	if c.versionCache != nil && time.Since(c.versionCache.timestamp) < c.cacheValidity {
 		version = c.versionCache.value
-		ch <- c.NodeVersion.MustNewConstMetric(1, c.config.ClusterName, version)
+		ch <- c.NodeVersion.MustNewConstMetric(1, c.config.NetworkName, version)
 		c.logger.Debug("Version returned from cache")
 		c.cacheMutex.RUnlock()
 	} else {
@@ -134,7 +134,7 @@ func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
 		version, err = c.rpcClient.GetVersion(ctx)
 		c.logger.Debugf("GetVersion took: %v ms", time.Since(callStart).Milliseconds())
 		if err == nil {
-			ch <- c.NodeVersion.MustNewConstMetric(1, c.config.ClusterName, version)
+			ch <- c.NodeVersion.MustNewConstMetric(1, c.config.NetworkName, version)
 			// Update cache
 			c.cacheMutex.Lock()
 			c.versionCache = &cachedVersion{
@@ -144,7 +144,7 @@ func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
 			c.cacheMutex.Unlock()
 		} else {
 			c.logger.Errorw("Failed to collect version", "error", err)
-			ch <- c.NodeVersion.MustNewConstMetric(0, c.config.ClusterName, "unknown")
+			ch <- c.NodeVersion.MustNewConstMetric(0, c.config.NetworkName, "unknown")
 			version = "unknown"
 		}
 	}
@@ -152,8 +152,8 @@ func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
 	// Check health cache
 	c.cacheMutex.RLock()
 	if c.healthCache != nil && time.Since(c.healthCache.timestamp) < c.cacheValidity {
-		ch <- c.NodeHealth.MustNewConstMetric(float64(c.healthCache.isHealthy), c.config.ClusterName)
-		ch <- c.NodeNumSlotsBehind.MustNewConstMetric(float64(c.healthCache.numSlotsBehind), c.config.ClusterName)
+		ch <- c.NodeHealth.MustNewConstMetric(float64(c.healthCache.isHealthy), c.config.NetworkName)
+		ch <- c.NodeNumSlotsBehind.MustNewConstMetric(float64(c.healthCache.numSlotsBehind), c.config.NetworkName)
 		numSlotsBehind = c.healthCache.numSlotsBehind
 		c.logger.Debug("Health returned from cache")
 		c.cacheMutex.RUnlock()
@@ -173,8 +173,8 @@ func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
 				}
 			}
 		}
-		ch <- c.NodeHealth.MustNewConstMetric(float64(isHealthy), c.config.ClusterName)
-		ch <- c.NodeNumSlotsBehind.MustNewConstMetric(float64(numSlotsBehind), c.config.ClusterName)
+		ch <- c.NodeHealth.MustNewConstMetric(float64(isHealthy), c.config.NetworkName)
+		ch <- c.NodeNumSlotsBehind.MustNewConstMetric(float64(numSlotsBehind), c.config.NetworkName)
 
 		// Update cache
 		c.cacheMutex.Lock()
@@ -191,10 +191,10 @@ func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
 	slot, err := c.rpcClient.GetMinimumLedgerSlot(ctx)
 	c.logger.Debugf("GetMinimumLedgerSlot took: %v ms", time.Since(callStart).Milliseconds())
 	if err == nil {
-		ch <- c.NodeMinimumLedgerSlot.MustNewConstMetric(float64(slot), c.config.ClusterName)
+		ch <- c.NodeMinimumLedgerSlot.MustNewConstMetric(float64(slot), c.config.NetworkName)
 	} else {
 		c.logger.Errorw("Failed to get minimum ledger slot", "error", err)
-		ch <- c.NodeMinimumLedgerSlot.MustNewConstMetric(0, c.config.ClusterName)
+		ch <- c.NodeMinimumLedgerSlot.MustNewConstMetric(0, c.config.NetworkName)
 	}
 
 	// Collect first available block
@@ -202,10 +202,10 @@ func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
 	block, err := c.rpcClient.GetFirstAvailableBlock(ctx)
 	c.logger.Debugf("GetFirstAvailableBlock took: %v ms", time.Since(callStart).Milliseconds())
 	if err == nil {
-		ch <- c.NodeFirstAvailableBlock.MustNewConstMetric(float64(block), c.config.ClusterName)
+		ch <- c.NodeFirstAvailableBlock.MustNewConstMetric(float64(block), c.config.NetworkName)
 	} else {
 		c.logger.Errorw("Failed to get first available block", "error", err)
-		ch <- c.NodeFirstAvailableBlock.MustNewConstMetric(0, c.config.ClusterName)
+		ch <- c.NodeFirstAvailableBlock.MustNewConstMetric(0, c.config.NetworkName)
 	}
 
 	// Collect transaction count from epoch info
@@ -213,10 +213,10 @@ func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
 	epochInfo, err := c.rpcClient.GetEpochInfo(ctx, rpc.CommitmentConfirmed)
 	c.logger.Debugf("GetEpochInfo took: %v ms", time.Since(callStart).Milliseconds())
 	// Collect network epoch
-	ch <- c.NodeEpoch.MustNewConstMetric(float64(epochInfo.Epoch), c.config.ClusterName)
+	ch <- c.NodeEpoch.MustNewConstMetric(float64(epochInfo.Epoch), c.config.NetworkName)
 
 	if err == nil {
-		ch <- c.NodeTransactionCount.MustNewConstMetric(float64(epochInfo.TransactionCount), c.config.ClusterName)
+		ch <- c.NodeTransactionCount.MustNewConstMetric(float64(epochInfo.TransactionCount), c.config.NetworkName)
 
 		c.logger.Infow("Successfully collected metrics",
 			"slot_height", epochInfo.AbsoluteSlot,
@@ -231,6 +231,6 @@ func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
 		)
 	} else {
 		c.logger.Errorw("Failed to collect metrics", "error", err)
-		ch <- c.NodeTransactionCount.MustNewConstMetric(0, c.config.ClusterName)
+		ch <- c.NodeTransactionCount.MustNewConstMetric(0, c.config.NetworkName)
 	}
 }

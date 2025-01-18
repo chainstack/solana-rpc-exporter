@@ -43,7 +43,7 @@ func NewSlotWatcher(client *rpc.Client, config *ExporterConfig) *SlotWatcher {
 			Name: "solana_node_slot_height",
 			Help: "Current slot height of the RPC node",
 			ConstLabels: prometheus.Labels{
-				"cluster": config.ClusterName,
+				"network": config.NetworkName,
 			},
 		}),
 
@@ -51,7 +51,7 @@ func NewSlotWatcher(client *rpc.Client, config *ExporterConfig) *SlotWatcher {
 			Name: "solana_node_block_height",
 			Help: "Current block height of the RPC node",
 			ConstLabels: prometheus.Labels{
-				"cluster": config.ClusterName,
+				"network": config.NetworkName,
 			},
 		}),
 
@@ -59,7 +59,7 @@ func NewSlotWatcher(client *rpc.Client, config *ExporterConfig) *SlotWatcher {
 			Name: "solana_node_epoch_first_slot",
 			Help: "First slot of current epoch",
 			ConstLabels: prometheus.Labels{
-				"cluster": config.ClusterName,
+				"network": config.NetworkName,
 			},
 		}),
 
@@ -67,7 +67,7 @@ func NewSlotWatcher(client *rpc.Client, config *ExporterConfig) *SlotWatcher {
 			Name: "solana_node_epoch_last_slot",
 			Help: "Last slot of current epoch",
 			ConstLabels: prometheus.Labels{
-				"cluster": config.ClusterName,
+				"network": config.NetworkName,
 			},
 		}),
 
@@ -75,7 +75,7 @@ func NewSlotWatcher(client *rpc.Client, config *ExporterConfig) *SlotWatcher {
 			Name: "solana_node_slot_processing_time",
 			Help: "Time taken to process each slot in seconds",
 			ConstLabels: prometheus.Labels{
-				"cluster": config.ClusterName,
+				"network": config.NetworkName,
 			},
 		}),
 
@@ -83,7 +83,7 @@ func NewSlotWatcher(client *rpc.Client, config *ExporterConfig) *SlotWatcher {
 			Name: "solana_node_skipped_slots_total",
 			Help: "Total number of skipped slots",
 			ConstLabels: prometheus.Labels{
-				"cluster": config.ClusterName,
+				"network": config.NetworkName,
 			},
 		}),
 	}
