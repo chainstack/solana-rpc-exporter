@@ -52,6 +52,7 @@ type SolanaCollector struct {
 	NodeNumSlotsBehind      *GaugeDesc
 	NodeMinimumLedgerSlot   *GaugeDesc
 	NodeFirstAvailableBlock *GaugeDesc
+	NodeEpoch               *GaugeDesc
 }
 
 func NewSolanaCollector(client *rpc.Client, config *ExporterConfig) *SolanaCollector {
@@ -91,6 +92,11 @@ func NewSolanaCollector(client *rpc.Client, config *ExporterConfig) *SolanaColle
 			"First available block in the RPC node's ledger",
 			ClusterLabel,
 		),
+		NodeEpoch: NewGaugeDesc(
+			"solana_network_epoch",
+			"Current epoch number",
+			ClusterLabel,
+		),
 	}
 	return collector
 }
@@ -102,6 +108,7 @@ func (c *SolanaCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- c.NodeNumSlotsBehind.Desc
 	ch <- c.NodeMinimumLedgerSlot.Desc
 	ch <- c.NodeFirstAvailableBlock.Desc
+	ch <- c.NodeEpoch.Desc
 }
 
 func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
@@ -205,16 +212,21 @@ func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
 	callStart = time.Now()
 	epochInfo, err := c.rpcClient.GetEpochInfo(ctx, rpc.CommitmentConfirmed)
 	c.logger.Debugf("GetEpochInfo took: %v ms", time.Since(callStart).Milliseconds())
+	// Collect network epoch
+	ch <- c.NodeEpoch.MustNewConstMetric(float64(epochInfo.Epoch), c.config.ClusterName)
 
 	if err == nil {
 		ch <- c.NodeTransactionCount.MustNewConstMetric(float64(epochInfo.TransactionCount), c.config.ClusterName)
 
 		c.logger.Infow("Successfully collected metrics",
+			"slot_height", epochInfo.AbsoluteSlot,
+			"block_height", epochInfo.BlockHeight,
 			"epoch", epochInfo.Epoch,
 			"slots_behind", numSlotsBehind,
 			"min_ledger_slot", slot,
 			"first_available_block", block,
 			"version", version,
+			"block_processing_time", time.Since(callStart).Seconds(),
 			"total_duration_ms", time.Since(totalStart).Milliseconds(),
 		)
 	} else {
