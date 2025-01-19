@@ -3,12 +3,13 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/naviat/solana-rpc-exporter/pkg/rpc"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"testing"
 	"time"
+
+	"github.com/naviat/solana-rpc-exporter/pkg/rpc"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/stretchr/testify/assert"
 )
 
 type RPCSimulator struct {
@@ -29,12 +30,11 @@ func NewRPCSimulator(t *testing.T, slot int64) (*RPCSimulator, *rpc.Client) {
 	mockServer, client := rpc.NewMockClient(t,
 		map[string]any{
 			"getVersion": map[string]any{
-				"solana-core": "1.16.7",
+				"solana-core": "2.0.21", // Updated version to match current
 				"feature-set": 2891131721,
 			},
 			"getHealth": "ok",
 		},
-		nil, nil, nil,
 	)
 
 	simulator := &RPCSimulator{
@@ -43,7 +43,7 @@ func NewRPCSimulator(t *testing.T, slot int64) (*RPCSimulator, *rpc.Client) {
 		BlockHeight:      0,
 		TransactionCount: 0,
 		IsHealthy:        true,
-		Version:          "1.16.7",
+		Version:          "2.0.21",
 		SlotTime:         400 * time.Millisecond,
 		MinLedgerSlot:    0,
 	}
@@ -163,6 +163,10 @@ func TestSolanaCollector_WithSimulator(t *testing.T) {
 				assert.True(t, value == 0 || value == 1)
 			case "solana_node_transaction_count":
 				assert.True(t, metric.GetMetric()[0].GetGauge().GetValue() > 0)
+			case "solana_node_slot_height":
+				assert.True(t, metric.GetMetric()[0].GetGauge().GetValue() > 100) // Started at slot 100
+			case "solana_node_block_height":
+				assert.True(t, metric.GetMetric()[0].GetGauge().GetValue() > 0)
 			}
 		}
 
@@ -174,6 +178,9 @@ func TestSolanaCollector_WithSimulator(t *testing.T) {
 			"solana_node_num_slots_behind",
 			"solana_node_minimum_ledger_slot",
 			"solana_node_first_available_block",
+			"solana_node_slot_height",
+			"solana_node_block_height",
+			"solana_network_epoch",
 		}
 		for _, name := range expectedMetrics {
 			assert.True(t, found[name], "Missing metric: %s", name)

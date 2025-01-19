@@ -27,11 +27,12 @@ func NewExporterConfig(
 ) (*ExporterConfig, error) {
 	logger := slog.Get()
 	logger.Infow(
-		"Setting up export config with ",
+		"Setting up exporter configuration",
 		"httpTimeout", httpTimeout.Seconds(),
 		"rpcUrl", rpcUrl,
 		"listenAddress", listenAddress,
 		"networkName", networkName,
+		"slotPace", slotPace.Seconds(),
 		"debug", debug,
 	)
 
@@ -60,7 +61,7 @@ func NewExporterConfigFromCLI(ctx context.Context) (*ExporterConfig, error) {
 		&httpTimeout,
 		"http-timeout",
 		60,
-		"HTTP timeout to use, in seconds.",
+		"HTTP timeout in seconds for RPC calls",
 	)
 	flag.StringVar(
 		&rpcUrl,
@@ -73,19 +74,19 @@ func NewExporterConfigFromCLI(ctx context.Context) (*ExporterConfig, error) {
 		&listenAddress,
 		"listen-address",
 		":8080",
-		"Listen address",
+		"The address to listen on for HTTP requests",
 	)
 	flag.IntVar(
 		&slotPace,
 		"slot-pace",
 		1,
-		"Time between slot-watching metric collections, defaults to 1s.",
+		"Time between slot-watching metric collections in seconds",
 	)
 	flag.StringVar(
 		&networkName,
 		"network",
-		"mainnet",
-		"Name of the Solana network (mainnet, testnet, devnet)",
+		"mainnet-beta",
+		"Name of the Solana network (mainnet-beta, testnet, devnet, localnet)",
 	)
 	flag.BoolVar(
 		&debug,

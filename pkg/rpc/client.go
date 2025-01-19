@@ -88,13 +88,17 @@ func (c *Client) TestConnection(ctx context.Context) error {
 		}
 
 		lastErr = err
-		if c.logger != nil { // Add this check
+		if c.logger != nil {
 			c.logger.Warnf("Connection attempt %d/%d failed: %v", i+1, maxRetries, err)
 		}
 
 		if i < maxRetries-1 { // Don't sleep after the last attempt
-			time.Sleep(retryDelay)
-			retryDelay *= 2 // Exponential backoff
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(retryDelay):
+				retryDelay *= 2 // Exponential backoff
+			}
 		}
 	}
 
@@ -120,7 +124,6 @@ func getResponse[T any](
 		return fmt.Errorf("failed to marshal request: %w", err)
 	}
 
-	// Optional logging
 	if client.logger != nil {
 		client.logger.Debugf("Making RPC request to %s: %s", client.RpcUrl, string(buffer))
 	}
@@ -142,7 +145,6 @@ func getResponse[T any](
 	}
 	defer resp.Body.Close()
 
-	// Optional logging
 	if client.logger != nil {
 		duration := time.Since(start)
 		client.logger.Debugw("RPC request completed",
@@ -156,7 +158,6 @@ func getResponse[T any](
 		return fmt.Errorf("error reading response: %w", err)
 	}
 
-	// Optional logging
 	if client.logger != nil {
 		client.logger.Debugf("RPC response: %s", string(body))
 	}
@@ -174,6 +175,14 @@ func getResponse[T any](
 }
 
 // Core RPC methods
+func (c *Client) GetBlockTime(ctx context.Context, slot int64) (int64, error) {
+	var resp Response[int64]
+	if err := getResponse(ctx, c, "getBlockTime", []any{slot}, &resp); err != nil {
+		return 0, err
+	}
+	return resp.Result, nil
+}
+
 func (c *Client) GetEpochInfo(ctx context.Context, commitment Commitment) (*EpochInfo, error) {
 	var resp Response[EpochInfo]
 	config := map[string]string{"commitment": string(commitment)}
@@ -189,14 +198,13 @@ func (c *Client) GetVersion(ctx context.Context) (string, error) {
 	if c.versionCache != nil && time.Since(c.versionCache.timestamp) < c.cacheValidity {
 		version := c.versionCache.value
 		c.cacheMutex.RUnlock()
-		if c.logger != nil { // Add this check
+		if c.logger != nil {
 			c.logger.Debug("Version returned from cache")
 		}
 		return version, nil
 	}
 	c.cacheMutex.RUnlock()
 
-	// Cache miss or expired, fetch new value
 	var resp Response[struct {
 		Version string `json:"solana-core"`
 	}]
@@ -221,17 +229,15 @@ func (c *Client) GetHealth(ctx context.Context) (string, error) {
 	if c.healthCache != nil && time.Since(c.healthCache.timestamp) < c.cacheValidity {
 		health := c.healthCache.value
 		c.cacheMutex.RUnlock()
-		if c.logger != nil { // Add this check
+		if c.logger != nil {
 			c.logger.Debug("Health status returned from cache")
 		}
 		return health, nil
 	}
 	c.cacheMutex.RUnlock()
 
-	// Cache miss or expired, fetch new value
 	var resp Response[string]
 	if err := getResponse(ctx, c, "getHealth", []any{}, &resp); err != nil {
-		// Don't cache error responses
 		return "", err
 	}
 
@@ -260,70 +266,4 @@ func (c *Client) GetFirstAvailableBlock(ctx context.Context) (int64, error) {
 		return 0, err
 	}
 	return resp.Result, nil
-}
-
-func (c *Client) GetSlotLeader(ctx context.Context) (string, error) {
-	var resp Response[string]
-	if err := getResponse(ctx, c, "getSlotLeader", []any{}, &resp); err != nil {
-		return "", err
-	}
-	return resp.Result, nil
-}
-
-func (c *Client) GetPerfCounters(ctx context.Context) (map[string]int64, error) {
-	var resp Response[map[string]int64]
-	if err := getResponse(ctx, c, "getPerfCounters", []any{}, &resp); err != nil {
-		return nil, err
-	}
-	return resp.Result, nil
-}
-
-func (c *Client) GetBalance(ctx context.Context, commitment Commitment, address string) (float64, error) {
-	var resp Response[ContextualResult[int]]
-	config := map[string]string{"commitment": string(commitment)}
-	if err := getResponse(ctx, c, "getBalance", []any{address, config}, &resp); err != nil {
-		return 0, err
-	}
-	return float64(resp.Result.Value) / LamportsInSol, nil
-}
-
-func (c *Client) GetBlock(ctx context.Context, commitment Commitment, slot int, encoding string) (*Block, error) {
-	var resp Response[Block]
-	config := map[string]any{
-		"commitment":         string(commitment),
-		"encoding":           encoding,
-		"transactionDetails": encoding,
-		"rewards":            true,
-	}
-	if err := getResponse(ctx, c, "getBlock", []any{slot, config}, &resp); err != nil {
-		return nil, err
-	}
-	return &resp.Result, nil
-}
-
-func (c *Client) GetInflationReward(ctx context.Context, commitment Commitment, addresses []string, epoch int) ([]InflationReward, error) {
-	addressesAny := make([]any, len(addresses))
-	for i, addr := range addresses {
-		addressesAny[i] = addr
-	}
-
-	config := map[string]any{
-		"commitment": string(commitment),
-		"epoch":      epoch,
-	}
-
-	var resp Response[[]InflationReward]
-	if err := getResponse(ctx, c, "getInflationReward", []any{addressesAny, config}, &resp); err != nil {
-		return nil, err
-	}
-	return resp.Result, nil
-}
-
-func (c *Client) GetSlotInfo(ctx context.Context, commitment Commitment, slot int) (*SlotInfo, error) {
-	config := map[string]string{"commitment": string(commitment)}
-	var resp Response[SlotInfo]
-	if err := getResponse(ctx, c, "getSlotInfo", []any{slot, config}, &resp); err != nil {
-		return nil, err
-	}
-	return &resp.Result, nil
 }
