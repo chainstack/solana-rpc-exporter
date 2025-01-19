@@ -83,20 +83,37 @@ func (s *MockServer) getResult(method string, params ...any) (any, *RPCError) {
 	switch method {
 	case "getBlockTime":
 		if len(params) == 0 {
-			return nil, &RPCError{Code: -32602, Message: "Invalid params"}
+			return nil, &RPCError{
+				Code:    -32602,
+				Message: "Invalid params",
+				Method:  method,
+			}
 		}
 		slot := params[0].(float64)
 		if blockTime, ok := s.blockTimes[int64(slot)]; ok {
 			return blockTime, nil
 		}
-		return nil, &RPCError{Code: -32004, Message: "Block not available"}
+		return nil, &RPCError{
+			Code:    -32004,
+			Message: "Block not available",
+			Method:  method,
+		}
 
 	default:
 		// Fall back to easy results
 		if result, ok := s.easyResults[method]; ok {
+			// If result is an RPCError, return it directly
+			if rpcErr, ok := result.(*RPCError); ok {
+				rpcErr.Method = method
+				return nil, rpcErr
+			}
 			return result, nil
 		}
-		return nil, &RPCError{Code: -32601, Message: "Method not found"}
+		return nil, &RPCError{
+			Code:    -32601,
+			Message: "Method not found",
+			Method:  method,
+		}
 	}
 }
 

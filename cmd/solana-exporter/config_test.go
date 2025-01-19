@@ -25,7 +25,7 @@ func TestNewExporterConfig(t *testing.T) {
 			rpcUrl:        "http://localhost:8899",
 			listenAddress: ":8080",
 			slotPace:      time.Second,
-			networkName:   "mainnet",
+			networkName:   "mainnet-beta",
 			debug:         false,
 			wantErr:       false,
 		},
@@ -95,7 +95,7 @@ func parseFlagsForTest(args []string) (*ExporterConfig, error) {
 	flagSet.StringVar(&rpcUrl, "rpc-url", "http://localhost:8899", "Solana RPC URL")
 	flagSet.StringVar(&listenAddress, "listen-address", ":8080", "Listen address")
 	flagSet.IntVar(&slotPace, "slot-pace", 1, "Slot pace in seconds")
-	flagSet.StringVar(&networkName, "network", "mainnet", "Network name")
+	flagSet.StringVar(&networkName, "network", "mainnet-beta", "Network name")
 	flagSet.BoolVar(&debug, "debug", false, "Enable debug mode")
 
 	if err := flagSet.Parse(args); err != nil {
@@ -128,7 +128,7 @@ func TestNewExporterConfigFromCLI(t *testing.T) {
 				assert.Equal(t, "http://localhost:8899", config.RpcUrl)
 				assert.Equal(t, ":8080", config.ListenAddress)
 				assert.Equal(t, time.Second, config.SlotPace)
-				assert.Equal(t, "mainnet", config.NetworkName)
+				assert.Equal(t, "mainnet-beta", config.NetworkName)
 				assert.False(t, config.Debug)
 			},
 		},

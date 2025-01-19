@@ -37,22 +37,16 @@ func (w *SlotWatcher) WatchSlots(ctx context.Context) error {
 	ticker := time.NewTicker(w.config.SlotPace)
 	defer ticker.Stop()
 
-	w.logger.Infof("Starting slot watcher, running every %vs", w.config.SlotPace.Seconds())
-
 	for {
 		select {
 		case <-ctx.Done():
-			w.logger.Infof("Stopping WatchSlots() at slot %v", w.slotWatermark)
 			return ctx.Err()
 		case <-ticker.C:
-			// Get epoch info with confirmed commitment
 			epochInfo, err := w.client.GetEpochInfo(ctx, rpc.CommitmentConfirmed)
 			if err != nil {
-				w.logger.Errorw("Failed to get epoch info", "error", err)
 				continue
 			}
 
-			// Track epoch boundaries
 			if w.currentEpoch == 0 || epochInfo.Epoch > w.currentEpoch {
 				firstSlot, lastSlot := GetEpochBounds(epochInfo)
 				w.currentEpoch = epochInfo.Epoch

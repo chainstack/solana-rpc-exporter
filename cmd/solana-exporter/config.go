@@ -85,8 +85,8 @@ func NewExporterConfigFromCLI(ctx context.Context) (*ExporterConfig, error) {
 	flag.StringVar(
 		&networkName,
 		"network",
-		"mainnet",
-		"Name of the Solana network (mainnet, testnet, devnet, localnet)",
+		"mainnet-beta",
+		"Name of the Solana network (mainnet-beta, testnet, devnet, localnet)",
 	)
 	flag.BoolVar(
 		&debug,

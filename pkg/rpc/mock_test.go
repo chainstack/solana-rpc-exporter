@@ -2,105 +2,140 @@ package rpc
 
 import (
 	"context"
-	"github.com/stretchr/testify/assert"
+	"errors"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestMockServer_getBalance(t *testing.T) {
-	_, client := NewMockClient(
-		t,
-		nil,
-		map[string]int{"aaa": 2 * LamportsInSol},
-		nil,
-		map[int]MockSlotInfo{},
-	)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+func TestMockServer_SetOpt(t *testing.T) {
+	server, client := NewMockClient(t, map[string]any{})
+	defer server.Close()
 
-	balance, err := client.GetBalance(ctx, CommitmentFinalized, "aaa")
+	// Test EasyResultsOpt
+	server.SetOpt(EasyResultsOpt, "getVersion", map[string]any{
+		"solana-core": "2.0.21",
+		"feature-set": 2891131721,
+	})
+
+	ctx := context.Background()
+	version, err := client.GetVersion(ctx)
 	assert.NoError(t, err)
-	assert.Equal(t, float64(2), balance)
+	assert.Equal(t, "2.0.21", version)
+
+	// Test BlockTimeOpt
+	server.SetOpt(BlockTimeOpt, int64(100), int64(1234567890))
+	blockTime, err := client.GetBlockTime(ctx, 100)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(1234567890), blockTime)
 }
 
-func TestMockServer_getBlock(t *testing.T) {
-	_, client := NewMockClient(t,
-		nil,
-		nil,
-		nil,
-		map[int]MockSlotInfo{
-			1: {Block: &MockBlockInfo{Fee: 10, NumTransactions: 1, BlockTime: 1234567890}},
-			2: {Block: &MockBlockInfo{Fee: 5, NumTransactions: 2, BlockTime: 1234567891}},
+func TestMockServer_GetEpochInfo(t *testing.T) {
+	server, client := NewMockClient(t, map[string]any{
+		"getEpochInfo": map[string]int64{
+			"absoluteSlot":     100,
+			"blockHeight":      90,
+			"epoch":            2,
+			"slotIndex":        100,
+			"slotsInEpoch":     432000,
+			"transactionCount": 1000,
 		},
-	)
+	})
+	defer server.Close()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	block, err := client.GetBlock(ctx, CommitmentFinalized, 1, "full")
+	ctx := context.Background()
+	epochInfo, err := client.GetEpochInfo(ctx, CommitmentConfirmed)
 	assert.NoError(t, err)
-	assert.Equal(t,
-		Block{
-			BlockTime:       1234567890,
-			NumTransactions: 1,
-			Fee:             10,
-		},
-		*block,
-	)
-
-	block, err = client.GetBlock(ctx, CommitmentFinalized, 2, "none")
-	assert.NoError(t, err)
-	assert.Equal(t,
-		Block{
-			BlockTime:       1234567891,
-			NumTransactions: 2,
-			Fee:             5,
-		},
-		*block,
-	)
+	assert.Equal(t, &EpochInfo{
+		AbsoluteSlot:     100,
+		BlockHeight:      90,
+		Epoch:            2,
+		SlotIndex:        100,
+		SlotsInEpoch:     432000,
+		TransactionCount: 1000,
+	}, epochInfo)
 }
 
-func TestMockServer_getInflationReward(t *testing.T) {
-	_, client := NewMockClient(t,
-		nil,
-		nil,
-		map[string]int{"AAA": 2_500, "BBB": 2_501, "CCC": 2_502},
-		nil,
-	)
+func TestMockServer_GetHealth(t *testing.T) {
+    // Test healthy node
+    server, client := NewMockClient(t, map[string]any{
+        "getHealth": "ok",
+    })
+    defer server.Close()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+    ctx := context.Background()
+    health, err := client.GetHealth(ctx)
+    assert.NoError(t, err)
+    assert.Equal(t, "ok", health)
 
-	rewards, err := client.GetInflationReward(ctx, CommitmentFinalized, []string{"AAA", "BBB"}, 2)
-	assert.NoError(t, err)
-	assert.Equal(t,
-		[]InflationReward{{Amount: 2_500, Epoch: 2}, {Amount: 2_501, Epoch: 2}},
-		rewards,
-	)
+    // Test unhealthy node
+    server.SetOpt(EasyResultsOpt, "getHealth", &RPCError{
+        Code:    NodeUnhealthyCode,
+        Message: "Node is behind by 1000 slots",
+        Method:  "getHealth",
+        Data: map[string]any{
+            "numSlotsBehind": int64(1000),
+        },
+    })
+
+    // Clear the cache to force a new request
+    client.cacheMutex.Lock()
+    client.healthCache = nil
+    client.cacheMutex.Unlock()
+
+    // Check the unhealthy response
+    health, err = client.GetHealth(ctx)
+    assert.Error(t, err)
+    if assert.NotNil(t, err) {
+        var rpcErr *RPCError
+        if assert.True(t, errors.As(err, &rpcErr)) {
+            assert.Equal(t, NodeUnhealthyCode, rpcErr.Code)
+            assert.Equal(t, "getHealth", rpcErr.Method)
+        }
+    }
 }
 
-func TestMockServer_getSlotInfo(t *testing.T) {
-	_, client := NewMockClient(t,
-		nil,
-		nil,
-		nil,
-		map[int]MockSlotInfo{
-			1: {Parent: 0, Status: "finalized"},
-			2: {Parent: 1, Status: "confirmed"},
-			3: {Parent: 2, Status: "processed"},
-		},
-	)
+func TestMockServer_GetFirstAvailableBlock(t *testing.T) {
+	server, client := NewMockClient(t, map[string]any{
+		"getFirstAvailableBlock": int64(1000),
+	})
+	defer server.Close()
 
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	slotInfo, err := client.GetSlotInfo(ctx, CommitmentFinalized, 2)
+	ctx := context.Background()
+	block, err := client.GetFirstAvailableBlock(ctx)
 	assert.NoError(t, err)
-	assert.Equal(t,
-		SlotInfo{
-			Parent: 1,
-			Slot:   2,
-			Status: "confirmed",
-		},
-		*slotInfo,
-	)
+	assert.Equal(t, int64(1000), block)
+}
+
+func TestMockServer_GetMinimumLedgerSlot(t *testing.T) {
+	server, client := NewMockClient(t, map[string]any{
+		"minimumLedgerSlot": int64(500),
+	})
+	defer server.Close()
+
+	ctx := context.Background()
+	slot, err := client.GetMinimumLedgerSlot(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(500), slot)
+}
+
+func TestMockServer_ErrorHandling(t *testing.T) {
+	server, client := NewMockClient(t, map[string]any{})
+	defer server.Close()
+
+	errorResp := &RPCError{
+		Code:    -32601,
+		Message: "Method not found",
+		Method:  "getVersion",
+	}
+	server.SetOpt(EasyResultsOpt, "getVersion", errorResp)
+
+	ctx := context.Background()
+	version, err := client.GetVersion(ctx)
+	assert.Error(t, err)
+	assert.Equal(t, "", version)
+
+	var rpcErr *RPCError
+	assert.True(t, errors.As(err, &rpcErr))
+	assert.Equal(t, int64(-32601), rpcErr.Code)
 }

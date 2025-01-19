@@ -122,9 +122,7 @@ func (c *SolanaCollector) Describe(ch chan<- *prometheus.Desc) {
 }
 
 func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
+	ctx := context.Background()
 	totalStart := time.Now()
 	var version string
 	var numSlotsBehind int64
@@ -155,37 +153,22 @@ func (c *SolanaCollector) Collect(ch chan<- prometheus.Metric) {
 	}
 
 	// Health check and slots behind
-	c.cacheMutex.RLock()
-	if c.healthCache != nil && time.Since(c.healthCache.timestamp) < c.cacheValidity {
-		ch <- c.NodeHealth.MustNewConstMetric(float64(c.healthCache.isHealthy), c.config.NetworkName)
-		ch <- c.NodeNumSlotsBehind.MustNewConstMetric(float64(c.healthCache.numSlotsBehind), c.config.NetworkName)
-		numSlotsBehind = c.healthCache.numSlotsBehind
-		c.cacheMutex.RUnlock()
-	} else {
-		c.cacheMutex.RUnlock()
-		_, err := c.rpcClient.GetHealth(ctx)
-		isHealthy := 1
-		if err != nil {
-			isHealthy = 0
-			var rpcError *rpc.RPCError
-			if errors.As(err, &rpcError) {
-				var errorData rpc.NodeUnhealthyErrorData
-				if rpcError.Data != nil && rpc.UnpackRpcErrorData(rpcError, &errorData) == nil {
-					numSlotsBehind = errorData.NumSlotsBehind
-				}
+	_, err := c.rpcClient.GetHealth(ctx)
+	isHealthy := 0 // Default to unhealthy
+	if err != nil {
+		var rpcError *rpc.RPCError
+		if errors.As(err, &rpcError) {
+			var errorData rpc.NodeUnhealthyErrorData
+			if rpcError.Data != nil && rpc.UnpackRpcErrorData(rpcError, &errorData) == nil {
+				numSlotsBehind = errorData.NumSlotsBehind
 			}
 		}
-		ch <- c.NodeHealth.MustNewConstMetric(float64(isHealthy), c.config.NetworkName)
-		ch <- c.NodeNumSlotsBehind.MustNewConstMetric(float64(numSlotsBehind), c.config.NetworkName)
-
-		c.cacheMutex.Lock()
-		c.healthCache = &cachedHealth{
-			isHealthy:      isHealthy,
-			numSlotsBehind: numSlotsBehind,
-			timestamp:      time.Now(),
-		}
-		c.cacheMutex.Unlock()
+	} else {
+		isHealthy = 1
 	}
+
+	ch <- c.NodeHealth.MustNewConstMetric(float64(isHealthy), c.config.NetworkName)
+	ch <- c.NodeNumSlotsBehind.MustNewConstMetric(float64(numSlotsBehind), c.config.NetworkName)
 
 	// Collect ledger info
 	slot, err := c.rpcClient.GetMinimumLedgerSlot(ctx)

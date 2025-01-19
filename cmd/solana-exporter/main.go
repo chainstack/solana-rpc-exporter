@@ -39,17 +39,20 @@ func main() {
 
 	// Validate network name
 	if !isValidNetwork(config.NetworkName) {
-		logger.Fatalf("Invalid network name: %s. Must be one of: mainnet, testnet, devnet, localnet", config.NetworkName)
+		logger.Fatalf("Invalid network name: %s. Must be one of: mainnet-beta, testnet, devnet, localnet", config.NetworkName)
 	}
 
 	// Initialize RPC client
 	client := rpc.NewRPCClient(config.RpcUrl, config.HttpTimeout)
 
-	// Keep trying to connect to RPC node
+	// Initialize collectors
+	collector := NewSolanaCollector(client, config)
+	slotWatcher := NewSlotWatcher(client, config)
+
+	// Start slot watcher with infinite retry
 	go func() {
 		for {
-			if err := client.TestConnection(ctx); err != nil {
-				logger.Warnf("Connection to RPC node failed: %v. Will retry in 5 seconds...", err)
+			if err := slotWatcher.WatchSlots(ctx); err != nil && err != context.Canceled {
 				select {
 				case <-ctx.Done():
 					return
@@ -57,61 +60,21 @@ func main() {
 					continue
 				}
 			}
-			break
-		}
-		logger.Info("Successfully connected to RPC node")
-	}()
-
-	// Initialize collectors
-	collector := NewSolanaCollector(client, config)
-	slotWatcher := NewSlotWatcher(client, config)
-
-	// Start slot watcher
-	go func() {
-		retryDelay := time.Second * 5
-		for {
-			if err := slotWatcher.WatchSlots(ctx); err != nil && err != context.Canceled {
-				logger.Warnf("Slot watcher error: %v, retrying in %v...", err, retryDelay)
-				select {
-				case <-ctx.Done():
-					return
-				case <-time.After(retryDelay):
-					// Exponential backoff with max 1 minute
-					retryDelay = time.Duration(min(retryDelay.Seconds()*2, 60)) * time.Second
-					continue
-				}
-			}
-			retryDelay = time.Second * 5 // Reset delay on success
 		}
 	}()
 
-	// Register collector with retry
-	for {
-		if err := prometheus.Register(collector); err != nil {
-			if _, ok := err.(prometheus.AlreadyRegisteredError); ok {
-				// If already registered, that's fine
-				break
-			}
-			logger.Warnf("Failed to register collector: %v, retrying in 5 seconds...", err)
-			select {
-			case <-ctx.Done():
-				return
-			case <-time.After(5 * time.Second):
-				continue
-			}
-		}
-		break
+	// Register collector
+	if err := prometheus.Register(collector); err != nil {
+		logger.Warnf("Failed to register collector: %v, continuing anyway", err)
 	}
 
 	// Set up HTTP server
 	mux := http.NewServeMux()
 	mux.Handle("/metrics", promhttp.Handler())
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		// Check RPC node health but don't fail exporter health check
 		_, err := client.GetHealth(r.Context())
 		if err != nil {
-			logger.Warnf("RPC node health check failed: %v", err)
-			w.WriteHeader(http.StatusOK) // Still return OK as exporter is running
+			w.WriteHeader(http.StatusOK) // Still return 200 as exporter is running
 			w.Write([]byte("exporter running, rpc node unhealthy"))
 			return
 		}
@@ -145,11 +108,4 @@ func main() {
 	}
 
 	logger.Info("Exporter stopped")
-}
-
-func min(a, b float64) float64 {
-	if a < b {
-		return a
-	}
-	return b
 }

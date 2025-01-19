@@ -7,9 +7,9 @@ import (
 
 const (
 	// RPC Error Codes
-	NodeUnhealthyCode = -32005
-	NodeBehindCode    = -32009
-	TimeoutCode       = -32000
+	NodeUnhealthyCode int64 = -32005
+	NodeBehindCode    int64 = -32009
+	TimeoutCode       int64 = -32000
 )
 
 type (
