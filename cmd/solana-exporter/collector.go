@@ -13,9 +13,9 @@ import (
 )
 
 const (
-	StatusLabel   = "status"
-	VersionLabel  = "version"
-	NetworkLabel  = "network"
+	StatusLabel          = "status"
+	VersionLabel         = "version"
+	NetworkLabel         = "network"
 	DefaultCacheValidity = 60 * time.Second
 )
 
@@ -49,8 +49,8 @@ type SolanaCollector struct {
 	NodeMinimumLedgerSlot   *GaugeDesc
 	NodeFirstAvailableBlock *GaugeDesc
 	NodeEpoch               *GaugeDesc
-	NodeBlockHeight        *GaugeDesc
-	NodeSlotHeight         *GaugeDesc
+	NodeBlockHeight         *GaugeDesc
+	NodeSlotHeight          *GaugeDesc
 }
 
 func NewSolanaCollector(client *rpc.Client, config *ExporterConfig) *SolanaCollector {

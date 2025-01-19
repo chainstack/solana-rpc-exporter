@@ -64,7 +64,7 @@ func (s *MockServer) Close() error {
 func (s *MockServer) SetOpt(opt MockOpt, key any, value any) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	switch opt {
 	case EasyResultsOpt:
 		if s.easyResults == nil {

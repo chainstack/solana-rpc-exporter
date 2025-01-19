@@ -23,7 +23,7 @@ type (
 
 	RPCError struct {
 		Message string         `json:"message"`
-		Code    int64         `json:"code"`
+		Code    int64          `json:"code"`
 		Data    map[string]any `json:"data"`
 		Method  string         // Added for context
 	}
