@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"testing"
 	"time"
-	"math/rand"
 
 	"github.com/naviat/solana-rpc-exporter/pkg/rpc"
 	"github.com/prometheus/client_golang/prometheus"
@@ -14,12 +14,12 @@ import (
 
 type RPCSimulator struct {
 	Server           *rpc.MockServer
-	Slot            int64
-	BlockHeight     int64
+	Slot             int64
+	BlockHeight      int64
 	TransactionCount int64
-	IsHealthy       bool
-	SlotsBehind     int64
-	Version         string
+	IsHealthy        bool
+	SlotsBehind      int64
+	Version          string
 
 	// Constants for the simulator
 	SlotTime      time.Duration
@@ -39,13 +39,13 @@ func NewRPCSimulator(t *testing.T, slot int64) (*RPCSimulator, *rpc.Client) {
 
 	simulator := &RPCSimulator{
 		Server:           mockServer,
-		Slot:            0,
-		BlockHeight:     0,
+		Slot:             0,
+		BlockHeight:      0,
 		TransactionCount: 0,
-		IsHealthy:       true,
-		Version:         "2.0.21",
-		SlotTime:        400 * time.Millisecond,
-		MinLedgerSlot:   0,
+		IsHealthy:        true,
+		Version:          "2.0.21",
+		SlotTime:         400 * time.Millisecond,
+		MinLedgerSlot:    0,
 	}
 
 	// Initialize state

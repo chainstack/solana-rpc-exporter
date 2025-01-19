@@ -57,42 +57,42 @@ func TestMockServer_GetEpochInfo(t *testing.T) {
 }
 
 func TestMockServer_GetHealth(t *testing.T) {
-    // Test healthy node
-    server, client := NewMockClient(t, map[string]any{
-        "getHealth": "ok",
-    })
-    defer server.Close()
+	// Test healthy node
+	server, client := NewMockClient(t, map[string]any{
+		"getHealth": "ok",
+	})
+	defer server.Close()
 
-    ctx := context.Background()
-    health, err := client.GetHealth(ctx)
-    assert.NoError(t, err)
-    assert.Equal(t, "ok", health)
+	ctx := context.Background()
+	health, err := client.GetHealth(ctx)
+	assert.NoError(t, err)
+	assert.Equal(t, "ok", health)
 
-    // Test unhealthy node
-    server.SetOpt(EasyResultsOpt, "getHealth", &RPCError{
-        Code:    NodeUnhealthyCode,
-        Message: "Node is behind by 1000 slots",
-        Method:  "getHealth",
-        Data: map[string]any{
-            "numSlotsBehind": int64(1000),
-        },
-    })
+	// Test unhealthy node
+	server.SetOpt(EasyResultsOpt, "getHealth", &RPCError{
+		Code:    NodeUnhealthyCode,
+		Message: "Node is behind by 1000 slots",
+		Method:  "getHealth",
+		Data: map[string]any{
+			"numSlotsBehind": int64(1000),
+		},
+	})
 
-    // Clear the cache to force a new request
-    client.cacheMutex.Lock()
-    client.healthCache = nil
-    client.cacheMutex.Unlock()
+	// Clear the cache to force a new request
+	client.cacheMutex.Lock()
+	client.healthCache = nil
+	client.cacheMutex.Unlock()
 
-    // Check the unhealthy response
-    health, err = client.GetHealth(ctx)
-    assert.Error(t, err)
-    if assert.NotNil(t, err) {
-        var rpcErr *RPCError
-        if assert.True(t, errors.As(err, &rpcErr)) {
-            assert.Equal(t, NodeUnhealthyCode, rpcErr.Code)
-            assert.Equal(t, "getHealth", rpcErr.Method)
-        }
-    }
+	// Check the unhealthy response
+	health, err = client.GetHealth(ctx)
+	assert.Error(t, err)
+	if assert.NotNil(t, err) {
+		var rpcErr *RPCError
+		if assert.True(t, errors.As(err, &rpcErr)) {
+			assert.Equal(t, NodeUnhealthyCode, rpcErr.Code)
+			assert.Equal(t, "getHealth", rpcErr.Method)
+		}
+	}
 }
 
 func TestMockServer_GetFirstAvailableBlock(t *testing.T) {
