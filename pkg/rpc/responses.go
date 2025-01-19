@@ -30,8 +30,6 @@ type (
 		SamplePeriodSecs int64   `json:"samplePeriodSecs"`
 		Slot             int64   `json:"slot"`
 		TPS              float64 `json:"tps"`
-		TPSMax           float64 `json:"tpsMax"`
-		TPSMin           float64 `json:"tpsMin"`
 	}
 
 	SlotInfo struct {
@@ -52,26 +50,16 @@ type (
 	}
 
 	Block struct {
-		BlockTime       int64             `json:"blockTime"`
-		NumTransactions int               `json:"numTransactions"`
-		Fee             int               `json:"fee"`
-		Rewards         []BlockReward     `json:"rewards,omitempty"`
-		Transactions    []TransactionInfo `json:"transactions,omitempty"`
+		BlockTime       int64         `json:"blockTime"`
+		NumTransactions int           `json:"numTransactions"`
+		Fee             int           `json:"fee"`
+		Rewards         []BlockReward `json:"rewards,omitempty"`
 	}
 
 	BlockReward struct {
 		Pubkey     string `json:"pubkey"`
 		Lamports   int64  `json:"lamports"`
 		RewardType string `json:"rewardType"`
-	}
-
-	TransactionInfo struct {
-		Transaction map[string]any `json:"transaction"`
-	}
-
-	InflationReward struct {
-		Amount int `json:"amount"`
-		Epoch  int `json:"epoch"`
 	}
 )
 

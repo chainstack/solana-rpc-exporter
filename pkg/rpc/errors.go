@@ -7,13 +7,9 @@ import (
 
 const (
 	// RPC Error Codes
-	NodeUnhealthyCode     = -32005
-	SlotSkippedCode       = -32007
-	BlockNotAvailableCode = -32004
-	BlockCleanedUpCode    = -32001
-	NodeBehindCode        = -32009
-	TimeoutCode           = -32000
-	InternalErrorCode     = -32603
+	NodeUnhealthyCode = -32005
+	NodeBehindCode    = -32009
+	TimeoutCode       = -32000
 )
 
 type (
@@ -27,7 +23,7 @@ type (
 
 	RPCError struct {
 		Message string         `json:"message"`
-		Code    int64          `json:"code"`
+		Code    int64         `json:"code"`
 		Data    map[string]any `json:"data"`
 		Method  string         // Added for context
 	}
@@ -54,20 +50,6 @@ func UnpackRpcErrorData[T any](rpcErr *RPCError, formatted T) error {
 func IsNodeUnhealthy(err error) bool {
 	if rpcErr, ok := err.(*RPCError); ok {
 		return rpcErr.Code == NodeUnhealthyCode
-	}
-	return false
-}
-
-func IsSlotSkipped(err error) bool {
-	if rpcErr, ok := err.(*RPCError); ok {
-		return rpcErr.Code == SlotSkippedCode
-	}
-	return false
-}
-
-func IsBlockNotAvailable(err error) bool {
-	if rpcErr, ok := err.(*RPCError); ok {
-		return rpcErr.Code == BlockNotAvailableCode || rpcErr.Code == BlockCleanedUpCode
 	}
 	return false
 }
