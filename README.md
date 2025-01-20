@@ -152,6 +152,7 @@ go mod tidy
 ```shell
 go test -v ./cmd/solana-exporter
 go test -v ./pkg/rpc
+go test -v -coverprofile=coverage.out ./...
 ```
 
 ### 4. Build
