@@ -96,9 +96,6 @@ The exporter supports several CLI flags and environment variables. Below is a su
 | `--rpc-url`           | `http://localhost:8899`    | URL of the Solana RPC endpoint.                                            |
 | `--listen-address`    | `:8080`                    | Host and port for the exporter’s HTTP server.                              |
 | `--network`           | `mainnet-beta`             | Network name (`mainnet-beta`, `testnet`, `devnet`, or `localnet`).         |
-| `--http-timeout`      | `60` (seconds)             | Timeout (in seconds) for HTTP requests to the Solana RPC node.             |
-| `--slot-pace`         | `1s`                       | Interval between successive slot polls.                                    |
-| `--debug`             | `false`                    | Enable verbose logging (useful for debugging).                             |
 
 > **Tip**: Use `--help` or consult the documentation for additional flags and corresponding environment variables (e.g., `SOLANA_URL`, `HTTP_TIMEOUT`, etc.).
 
