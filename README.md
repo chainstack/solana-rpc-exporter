@@ -1,6 +1,6 @@
 # Solana RPC Exporter
 
-A Prometheus exporter that connects to a Solana RPC node and exposes various metrics about Solana cluster performance, validator health, and more.
+A Prometheus exporter that connects to a Solana RPC node and exposes various metrics about Solana cluster performance, health, and more.
 
 > **Inspired by** [asymmetric-research/solana-exporter](https://github.com/asymmetric-research/solana-exporter). This project has been adapted specifically for **running against a Solana RPC node** instead of a validator node, and focuses on RPC-related metrics and cluster-wide information.
 
